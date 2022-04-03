@@ -1,5 +1,5 @@
 #include <pluginlib/class_list_macros.h>
-#include "global_planner/dijkstra_planner.h"
+#include "global_planner/astar_planner.h"
 
 
 PLUGINLIB_EXPORT_CLASS(global_planner::GlobalPlanner, nav_core::BaseGlobalPlanner)
@@ -94,6 +94,20 @@ namespace global_planner {
         vis_cells.publish(marker);
     }
 
+    double GlobalPlanner::heuristic_calc(Cell c1, Cell c2 , costmap_2d::Costmap2D* cost_map){
+
+        //TRY MANHATTAN
+
+        double cell1_x, cell1_y, cell2_x, cell2_y; 
+
+        cost_map->mapToWorld(c1.x, c1.y, cell1_x, cell1_y);
+        cost_map->mapToWorld(c2.x, c2.y, cell2_x, cell2_y);    
+
+
+        return std::pow (std::pow(cell1_x - cell2_x , 2) + std::pow(cell1_y - cell2_y , 2) , 0.5);  //this is eucleadian
+        //return abs(c1.x - c2.x) + abs(c1.y - c2.y); 
+    }
+
     bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,  std::vector<geometry_msgs::PoseStamped>& plan ){
 
         if(plan_pushed){
@@ -101,7 +115,7 @@ namespace global_planner {
             return true;
         }
         
-        ROS_WARN("DIJKSTRA callback");
+        ROS_WARN("Astar callback");
 
         uint  mx_i, my_i, mx_f, my_f;               //costmap cell coordinates (strictly positive)
         double      wx_i, wy_i, wx_f, wy_f;         //world coordinates (+ive or -ive)  
@@ -114,12 +128,16 @@ namespace global_planner {
         costmap_ros_->worldToMap(wx_i, wy_i, mx_i, my_i);       //conversion of coordinates to indices 
         costmap_ros_->worldToMap(wx_f, wy_f, mx_f, my_f);
 
-        std::priority_queue< Cell , std::vector<Cell> , pq_util> pq;     //min heap
+        std::priority_queue< Cell , std::vector<Cell> , pq_util > pq;     //min heap
+
+        Cell goal_cell;
+        goal_cell.x = mx_f;
+        goal_cell.y = my_f;
         
         Cell src;
         src.x = mx_i;
         src.y = my_i;
-        src.dist = 0;
+        src.dist = 0.0;
         
         pq.push(src);
         
@@ -128,9 +146,6 @@ namespace global_planner {
         
         std::map<Cell , Cell> parent;
         parent[src] = src;
-
-        std::map<Cell, int> dist;                               //current updated costs till now
-        dist[src] = 0;  
         
         while(!pq.empty()){
 
@@ -143,7 +158,6 @@ namespace global_planner {
             //curr_cell distance will be already filled, beacuse we are setting it before push into the queue
             
             visited[curr_cell] = true;
-            dist[curr_cell] = curr_cell.dist;
             
             //adding neighbours to the queue and updating distances
             for(int i=0 ; i < 4 ; i++){
@@ -157,29 +171,17 @@ namespace global_planner {
                 //neigh.dist = set later
 
                 int neigh_cost = (int)costmap_ros_->getCost(n_x, n_y); 
-                if( neigh_cost > 200){continue;}
+                if( neigh_cost > 200){continue;}    
 
                 if(isValid(neigh)){
                     if(visited.find(neigh) == visited.end()){                            //i.e new cell found 
-                        
-                        //assigning all dists as infinity if not already
-                        if(dist.find(neigh) == dist.end()){
-                            dist[neigh] = 10000;
-                            neigh.dist  = 10000;
-                        }
- 
-                        //dist[curr_cell] should exist
-                        if(curr_cell.dist + neigh_cost  < dist[neigh] ){
                             
-                            vis(n_x,n_y,costmap_ros_, true);
-                            neigh.dist  = curr_cell.dist + neigh_cost;
-                            dist[neigh] = curr_cell.dist + neigh_cost;
-                            visited[neigh] = true;
-                            parent[neigh] = curr_cell;
+                        vis(n_x,n_y,costmap_ros_, true);
+                        neigh.dist  = heuristic_calc(goal_cell, neigh , costmap_ros_);
+                        visited[neigh] = true;
+                        parent[neigh] = curr_cell;
 
-                            pq.push(neigh);
-                        }
-
+                        pq.push(neigh);
                     }
                 }
             } 

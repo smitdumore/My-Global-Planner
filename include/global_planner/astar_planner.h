@@ -12,11 +12,12 @@
 #include <queue>
 #include <vector>
 #include <visualization_msgs/Marker.h>
+#include <cstdlib>
 
 using std::string;
 
-#ifndef DIJKSTRA_PLANNER_CPP
-#define DIJKSTRA_PLANNER_CPP
+#ifndef ASTAR_PLANNER_CPP
+#define ASTAR_PLANNER_CPP
 
 namespace global_planner {
 
@@ -33,20 +34,20 @@ namespace global_planner {
         struct Cell{
             uint x;
             uint y;
-            int dist;               //current dist of cell //so far distance // so far sum of costs
+            double dist;               //current dist of cell //so far distance // so far sum of costs
 
             bool operator<(const Cell &c1) const{                     //this operator overloading helps std::map to arranges cells
                 return ((c1.x < x) || ( c1.x == x && c1.y < y));      
             }
 
             // bool operator()(Cell const& c1, Cell const& c2){          
-            //     return c1.dist < c2.dist;
+            //     return c1.dist > c2.dist;
             // } 
 
         };
 
         struct pq_util{
-            bool operator()(Cell const& c1, Cell const& c2){             //min heap
+            bool operator()(Cell const& c1, Cell const& c2){            //min heap
                 return c1.dist > c2.dist;
             } 
         };
@@ -61,6 +62,7 @@ namespace global_planner {
         costmap_2d::Costmap2D* costmap_ros_;
         void vis(int ,int, costmap_2d::Costmap2D*, bool);
         int size_x = 0, size_y = 0;
+        double heuristic_calc(Cell ,Cell , costmap_2d::Costmap2D*);
 
         bool plan_pushed = false;
         
