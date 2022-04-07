@@ -8,12 +8,14 @@ using namespace std;
 
 // Below arrays detail all 8 possible movements from a cell
 // 8 connected
-//int row[] = { -1, 0, 0, 1 , 1 , -1 , -1 , 1};
-//int col[] = { 0, -1, 1, 0 , 1 ,  1 , -1 , -1};
+int row[] = { -1, 0, 0, 1 , 1 , -1 , -1 , 1};
+int col[] = { 0, -1, 1, 0 , 1 ,  1 , -1 , -1};
 
 //4 connected
-int row[] = { 1, 0, 0, -1};
-int col[] = { 0, 1, -1, 0};
+//int row[] = { 1, 0, 0, -1};
+//int col[] = { 0, 1, -1, 0};
+
+int rowSize = sizeof(row)/sizeof(row[0]);
 
 
 
@@ -160,7 +162,7 @@ namespace global_planner {
             visited[curr_cell] = true;
             
             //adding neighbours to the queue and updating distances
-            for(int i=0 ; i < 4 ; i++){
+            for(int i=0 ; i < rowSize ; i++){
                 
                 uint n_x = x + row[i];
                 uint n_y = y + col[i];

@@ -15,6 +15,7 @@ using namespace std;
 int row[] = { 1, 0, 0, -1};
 int col[] = { 0, 1, -1, 0};
 
+int rowSize = sizeof(row)/sizeof(row[0]);
 
 
 namespace global_planner {
@@ -146,7 +147,7 @@ namespace global_planner {
             dist[curr_cell] = curr_cell.dist;
             
             //adding neighbours to the queue and updating distances
-            for(int i=0 ; i < 4 ; i++){
+            for(int i=0 ; i < rowSize ; i++){
                 
                 uint n_x = x + row[i];
                 uint n_y = y + col[i];
