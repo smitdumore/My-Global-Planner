@@ -40,4 +40,6 @@ include_directories(
 
 #add_library(global_planner_lib src/bfs_planner.cpp)
 #add_library(global_planner_lib src/dijkstra_planner.cpp)
-add_library(global_planner_lib src/astar_planner.cpp)
+#add_library(global_planner_lib src/astar_planner.cpp)
+add_library(global_planner_lib src/rrt_planner.cpp)
+
