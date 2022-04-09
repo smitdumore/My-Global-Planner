@@ -14,7 +14,7 @@ namespace global_planner {
     }
 
     GlobalPlanner::GlobalPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
-       
+        ROS_WARN("Global planner constructor");
         initialize(name, costmap_ros);
     }
 
@@ -27,12 +27,6 @@ namespace global_planner {
             name_ = name;
             costmap_ros_ = costmap_ros;
             costmap_ = costmap_ros->getCostmap(); 
-
-            ros::NodeHandle nh;
-            plan_pub_ = nh.advertise<nav_msgs::Path>("global_plan", 1);
-            tree_pub_ = nh.advertise<visualization_msgs::Marker>("tree", 1);
-            node_pub_ = nh.advertise<visualization_msgs::Marker>("node", 1);
-
             initialized_ = true;
             
         }
@@ -44,56 +38,22 @@ namespace global_planner {
         if(!initialized_){
             ROS_ERROR("RRT Not intialized");
             initialize(name_, costmap_ros_);
+            return false;                         //exits make plan
+        }
+
+        double goal_tol = 0.2;
+        int iter = 10000;
+        double d = 0.1;
+
+        ROS_ERROR("STARTING..........");
+        ros::Duration(2.0).sleep();
+        rrt Tree = generateRRT(start , goal,costmap_ros_, goal_tol , iter , d);
+
+        if(Tree.solution_found){
             return false;
         }
-        int a =0;
 
-        while(a < 10000){
-            geometry_msgs::Point rand_state1, rand_state2;
-
-            rand_state1 = getRandomState(costmap_ros_);
-            rand_state2 = getRandomState(costmap_ros_);
-
-            visualization_msgs::Marker node_msg1;
-            init_point(&node_msg1);
-            visualization_msgs::Marker node_msg2;
-            init_point(&node_msg2);
-            pub_point(&node_msg1 , &node_pub_ , rand_state1.x, rand_state1.y);
-            pub_point(&node_msg2 , &node_pub_ , rand_state2.x, rand_state2.y);
-
-            ROS_WARN("created two points");
-            ros::Duration(0.1).sleep();
-
-            std::vector<geometry_msgs::Point> edge;
-            edge.push_back(rand_state1);
-            edge.push_back(rand_state2);
-
-            if (edgeInFreeSpace(edge , costmap_ros_)){
-                visualization_msgs::Marker line_msg;
-                init_line(&line_msg);
-                pub_line(&line_msg, &tree_pub_, rand_state1.x , rand_state1.y, rand_state2.x , rand_state2.y);
-            }else{
-                ROS_ERROR("edge not free");
-            }
-
-            
-            
-            a++;    
-        }
-        //rand_state2 = getRandomState(costmap_ros_);
-        //pub_point(&node_msg , &node_pub_ , rand_state2.x, rand_state2.y);
-
-        
-           
-        
-
-    
-
-        //publish second point.
-
-        //add edge
-
-
+        return false;
     }
 
 

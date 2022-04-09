@@ -13,7 +13,7 @@ void init_line(visualization_msgs::Marker* line_msg){
     line_msg->type = visualization_msgs::Marker::LINE_LIST;
     line_msg->action = visualization_msgs::Marker::ADD;
     line_msg->pose.orientation.w = 1.0;
-    line_msg->scale.x = 0.05;
+    line_msg->scale.x = 0.01;
 }
 
 void pub_line(visualization_msgs::Marker* line_msg, ros::Publisher* line_pub, 
@@ -61,9 +61,9 @@ void init_point(visualization_msgs::Marker* point_msg){
     point_msg->type = visualization_msgs::Marker::SPHERE;
     point_msg->action = visualization_msgs::Marker::ADD;
     point_msg->pose.orientation.w = 1.0;
-    point_msg->scale.x = 0.2;
-    point_msg->scale.y = 0.2;
-    point_msg->scale.z = 0.2;
+    point_msg->scale.x = 0.05;
+    point_msg->scale.y = 0.05;
+    point_msg->scale.z = 0.05;
 }
 
 void pub_point(visualization_msgs::Marker* point_msg, ros::Publisher* point_pub, 
@@ -77,7 +77,7 @@ void pub_point(visualization_msgs::Marker* point_msg, ros::Publisher* point_pub,
     point_msg->pose.position.y = y;
     point_msg->pose.position.z = 0.0;
 
-    point_msg->color.a = 0.5;
+    point_msg->color.a = 1.0;
     point_msg->color.r = 1.0;
     point_msg->color.g = 0.0;
     point_msg->color.b = 0.0;

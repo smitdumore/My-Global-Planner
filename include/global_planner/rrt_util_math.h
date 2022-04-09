@@ -75,8 +75,8 @@ geometry_msgs::Point getRandomState(costmap_2d::Costmap2DROS* costmap_ros){
     double origin_y = costmap_->getOriginY();
 
     while(!isPointFree){
-        randomState.x = randomDouble(origin_x + costmap_->getSizeInMetersX()/4 , origin_x + 3*costmap_->getSizeInMetersX()/4);
-        randomState.y = randomDouble(origin_y + costmap_->getSizeInMetersY()/4 , origin_y + 3*costmap_->getSizeInMetersY()/4);
+        randomState.x = randomDouble(origin_x + costmap_->getSizeInMetersX()/3 , origin_x + 2*costmap_->getSizeInMetersX()/3);
+        randomState.y = randomDouble(origin_y + costmap_->getSizeInMetersY()/3 , origin_y + 2*costmap_->getSizeInMetersY()/3);
         isPointFree = inFreeSpace(randomState, costmap_ros);
     }
 
@@ -84,5 +84,7 @@ geometry_msgs::Point getRandomState(costmap_2d::Costmap2DROS* costmap_ros){
 
 }
 
+//randomState.x = randomDouble(origin_x + costmap_->getSizeInMetersX()/4 , origin_x + 3*costmap_->getSizeInMetersX()/4);
+//randomState.y = randomDouble(origin_y + costmap_->getSizeInMetersY()/4 , origin_y + 3*costmap_->getSizeInMetersY()/4);
 
 

@@ -11,6 +11,7 @@
 #include <map>
 #include <queue>
 #include <vector>
+#include <visualization_msgs/Marker.h>
 
 using std::string;
 
