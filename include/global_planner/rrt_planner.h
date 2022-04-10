@@ -10,6 +10,8 @@
 #include <math.h>
 #include <vector>
 #include <nav_msgs/Path.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 #include "rrt_util_math.h"
 #include "rrt_util_vis.h"
@@ -123,16 +125,24 @@ tree_node getNearestNeighbor(const geometry_msgs::Point rand_point, const rrt* T
     return near_node;                //returns the nearest node already in the tree
 }
 
-tree_node extendTree(geometry_msgs::Point rand_point, tree_node near_node , double d){
+tree_node extendTree(geometry_msgs::Point rand_point, tree_node near_node , double d,const std::vector<tree_node>* tree_nodes){
 
     tree_node new_node;
     new_node.node_coord.z = 0;
+    int parent_id=0;
 
     double theta = atan2(rand_point.y - near_node.node_coord.y , rand_point.x - near_node.node_coord.x);
     new_node.node_coord.x = near_node.node_coord.x +  d*cos(theta);
     new_node.node_coord.y = near_node.node_coord.y +  d*sin(theta);
 
+    for(int i=0;i<tree_nodes->size(); i++){
+        if(tree_nodes->at(i).node_coord == near_node.node_coord){
+            parent_id = i;
+        }
+    }
+
     //new_node.parent_id = near_node.parent_id;                          //near node's index no its parent MISTAKE
+    new_node.parent_id = parent_id;
 
     return new_node;
 }
@@ -158,21 +168,9 @@ rrt generateRRT(geometry_msgs::PoseStamped init_pose , geometry_msgs::PoseStampe
 
         rand_point = getRandomState(T.costmap);
 
-        //visualization_msgs::Marker rand_marker;
-        //init_point(&rand_marker);
-        //pub_point(&rand_marker,&(T.node_pub_),rand_point.x,rand_point.y);
-        //ROS_INFO("This is the Random point, sleeping__");
-        //ros::Duration(3.0).sleep();
-
         node_near = getNearestNeighbor(rand_point , &T);
 
-        //visualization_msgs::Marker near_marker;
-        //init_point(&near_marker);
-        //pub_point(&near_marker,&(T.node_pub_),node_near.node_coord.x,node_near.node_coord.y);
-        //ROS_INFO("This is the nearest point, sleeping__");
-        //ros::Duration(3.0).sleep();
-
-        node_new = extendTree(rand_point , node_near , d);
+        node_new = extendTree(rand_point , node_near , d , &(T.tree_nodes));
 
         edge.push_back(node_near.node_coord);
         edge.push_back(node_new.node_coord);
@@ -181,25 +179,24 @@ rrt generateRRT(geometry_msgs::PoseStamped init_pose , geometry_msgs::PoseStampe
         edge.clear();
 
         if(isEdgeFree){
+            //ROS_INFO("This is the new node, sleeping__");
+            ros::Duration(0.05).sleep();
             visualization_msgs::Marker new_marker;
             init_point(&new_marker);
             pub_point(&new_marker,&(T.node_pub_),node_new.node_coord.x,node_new.node_coord.y);
-            //ROS_INFO("This is the new node, sleeping__");
-            ros::Duration(0.1).sleep();
-
+            
             T.add_vertex(node_new);
             T.add_edge(node_near.node_coord, node_new.node_coord);
 
             visualization_msgs::Marker line_marker;
-            init_line(&line_marker);
+            init_line(&line_marker, 0.01);
             pub_line(&line_marker , &(T.tree_pub_),node_near.node_coord.x, node_near.node_coord.y , node_new.node_coord.x , node_new.node_coord.y);
             //ROS_INFO("Connected nearest to random ,sleeping___");
-            //ros::Duration(1.0).sleep();
 
         }else{continue;}
 
         if (getDistance(node_new.node_coord , final_pose.pose.position) < goal_tol){
-            ROS_INFO("GOAL FOUND************************************************8");
+            ROS_INFO("GOAL FOUND************************************************");
             T.solution_found = true;
             break;
         }
@@ -207,5 +204,69 @@ rrt generateRRT(geometry_msgs::PoseStamped init_pose , geometry_msgs::PoseStampe
 
     return T;
 }
+
+bool getPlan(rrt *T, std::vector<geometry_msgs::PoseStamped>* plan,
+            const geometry_msgs::PoseStamped &start,const geometry_msgs::PoseStamped &goal){
+
+    //last node pushed in the tree_nodes vector must be the closest to the goal
+    // so just trace it to back to its parent until we reach start point
+    
+
+    plan->clear();
+    geometry_msgs::PoseStamped temp_pose;
+    tf2::Quaternion quat_tf;
+    geometry_msgs::Quaternion quat_msg;
+    
+    temp_pose.header.frame_id = "map";
+    temp_pose.pose.orientation = goal.pose.orientation;
+
+    //last node's id
+    int current_id = T->tree_nodes.size()-1;
+
+    //this is only for visualisation
+    tree_node prev_node;
+    prev_node.node_coord = T->tree_nodes.at(current_id).node_coord;
+
+    while(current_id != 0){
+
+        temp_pose.pose.position = T->tree_nodes.at(current_id).node_coord;
+        plan->push_back(temp_pose);
+        current_id = T->tree_nodes.at(current_id).parent_id;
+
+        //setting the oreintation for next iteration
+        double dy , dx, yaw;
+        dy = prev_node.node_coord.y - T->tree_nodes.at(current_id).node_coord.y;
+        dx = prev_node.node_coord.x - T->tree_nodes.at(current_id).node_coord.x;
+        yaw = atan2(dy, dx);
+
+        quat_tf.setRPY(0,0,yaw);
+        quat_msg = tf2::toMsg(quat_tf);
+        temp_pose.pose.orientation = quat_msg;
+
+        visualization_msgs::Marker line_marker;
+        init_line(&line_marker, 0.05);
+        pub_line(&line_marker , &(T->tree_pub_),T->tree_nodes.at(current_id).node_coord.x, T->tree_nodes.at(current_id).node_coord.y
+                 , prev_node.node_coord.x , prev_node.node_coord.y);
+        ROS_INFO("publishing the path, sleeping______");
+        ros::Duration(0.2).sleep();
+
+        prev_node = T->tree_nodes.at(current_id);
+    }
+
+    temp_pose.pose.position = T->tree_nodes.at(0).node_coord;
+    temp_pose.pose.orientation = start.pose.orientation;
+    plan->push_back(temp_pose);
+
+    //possible causes of code crash
+    //1. poses pushed into plan do not have a valid orientation
+    //2. pushing start position twice ??
+    //3. normalise quaternion ??
+    //4.  
+
+    std::reverse(plan->begin() , plan->end());
+    
+    return true;
+}
+
 
 

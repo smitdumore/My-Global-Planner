@@ -41,18 +41,23 @@ namespace global_planner {
             return false;                         //exits make plan
         }
 
-        double goal_tol = 0.2;
+        double goal_tol = 0.3;      //0.2
         int iter = 10000;
-        double d = 0.1;
+        double d = 0.3;            //0.2
 
         ROS_ERROR("STARTING..........");
-        ros::Duration(2.0).sleep();
+        //ros::Duration(1.0).sleep();
         rrt Tree = generateRRT(start , goal,costmap_ros_, goal_tol , iter , d);
 
         if(Tree.solution_found){
-            return false;
+            ROS_WARN("Returing Path");
+            //plan.push_back(start);
+            //plan.push_back(goal);
+            //ROS_WARN("plan size , %d", plan.size());
+            return getPlan(&Tree , &plan , start , goal);
         }
 
+        ROS_ERROR("RRT Failed to find a path");
         return false;
     }
 

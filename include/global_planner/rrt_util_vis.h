@@ -5,15 +5,14 @@
 
 int count=0;
 
-void init_line(visualization_msgs::Marker* line_msg){
+void init_line(visualization_msgs::Marker* line_msg, double scale){
     
     line_msg->header.frame_id = "map";
     line_msg->id = count++;
-    //line_msg->ns
     line_msg->type = visualization_msgs::Marker::LINE_LIST;
     line_msg->action = visualization_msgs::Marker::ADD;
     line_msg->pose.orientation.w = 1.0;
-    line_msg->scale.x = 0.01;
+    line_msg->scale.x = scale;
 }
 
 void pub_line(visualization_msgs::Marker* line_msg, ros::Publisher* line_pub, 
@@ -57,7 +56,6 @@ void init_point(visualization_msgs::Marker* point_msg){
     
     point_msg->header.frame_id = "map";
     point_msg->id = count++;
-    //line_msg->ns
     point_msg->type = visualization_msgs::Marker::SPHERE;
     point_msg->action = visualization_msgs::Marker::ADD;
     point_msg->pose.orientation.w = 1.0;
