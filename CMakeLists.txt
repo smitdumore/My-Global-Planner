@@ -39,7 +39,7 @@ include_directories(
 ############ UNCOMMENT THE REQIURED ALGORITHM #################
 
 #add_library(global_planner_lib src/bfs_planner.cpp)
-#add_library(global_planner_lib src/dijkstra_planner.cpp)
+add_library(global_planner_lib src/dijkstra_planner.cpp)
 #add_library(global_planner_lib src/astar_planner.cpp)
-add_library(global_planner_lib src/rrt_planner.cpp)
+#add_library(global_planner_lib src/rrt_planner.cpp)
 

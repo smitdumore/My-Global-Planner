@@ -8,15 +8,14 @@ using namespace std;
 
 // Below arrays detail all 8 possible movements from a cell
 // 8 connected
-//int row[] = { -1, 0, 0, 1 , 1 , -1 , -1 , 1};
-//int col[] = { 0, -1, 1, 0 , 1 ,  1 , -1 , -1};
+int row[] = { -1, 0, 0, 1 , 1 , -1 , -1 , 1};
+int col[] = { 0, -1, 1, 0 , 1 ,  1 , -1 , -1};
 
 //4 connected
-int row[] = { 1, 0, 0, -1};
-int col[] = { 0, 1, -1, 0};
+// int row[] = { 1, 0, 0, -1};
+// int col[] = { 0, 1, -1, 0};
 
 int rowSize = sizeof(row)/sizeof(row[0]);
-
 
 namespace global_planner {
     
@@ -31,10 +30,16 @@ namespace global_planner {
     }
 
 
+    /**
+     * @brief - This function initializes the global cost map and other variables
+     * @param name 
+     * @param costmap_ros 
+     */
     void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
         
         costmap_ros_ = costmap_ros->getCostmap(); 
 
+        // global cost map limits
         size_x = costmap_ros_->getSizeInCellsX(); 
         size_y = costmap_ros_->getSizeInCellsY();
 
@@ -42,6 +47,11 @@ namespace global_planner {
            
     }
 
+    /**
+     * @brief This funcitons checks whether a cell is inside the gloabl cost map limits
+     * @param cell
+     * @return true/false
+     */
     bool GlobalPlanner::isValid(Cell cell)
     {
         if( cell.x >= size_x || cell.y >= size_y || cell.x < 0 || cell.y < 0){ 
@@ -50,6 +60,9 @@ namespace global_planner {
         return true;
     }
 
+    /**
+     * @brief - creates sphere list visualisations for the planner 
+     */
     void GlobalPlanner::vis(int x, int y, costmap_2d::Costmap2D* cost_map , bool path_cell){
         
         double cell_x, cell_y;
@@ -72,7 +85,7 @@ namespace global_planner {
         marker.color.b = 0.0;
 
         if(path_cell){
-            marker.color.r = 0.0;       //publishing BFS cells
+            marker.color.r = 0.0;     
         }else{
             marker.color.g = 0.0;
             marker.color.a = 1.0;       //publishing the path
@@ -94,7 +107,14 @@ namespace global_planner {
 
         vis_cells.publish(marker);
     }
-
+    
+    /**
+     * @brief Main planner loop. Planner is implemented in this function
+     * @param start - robot start pose in world frame
+     * @param goal - goal pose in world frame
+     * @param plan - Plan is a vector of poses
+     * @return true - success in finding the path
+     */
     bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,  std::vector<geometry_msgs::PoseStamped>& plan ){
 
         if(plan_pushed){
@@ -104,15 +124,15 @@ namespace global_planner {
         
         ROS_WARN("DIJKSTRA callback");
 
-        uint  mx_i, my_i, mx_f, my_f;               //costmap cell coordinates (strictly positive)
-        double      wx_i, wy_i, wx_f, wy_f;         //world coordinates (+ive or -ive)  
+        uint    mx_i, my_i, mx_f, my_f;         //costmap cell coordinates (strictly positive) in map
+        double  wx_i, wy_i, wx_f, wy_f;         //world coordinates (+ive or -ive)  
 
         wx_i = start.pose.position.x;       //i stands for initial or start 
         wy_i = start.pose.position.y;
         wx_f = goal.pose.position.x;        //f stands for final or goal
         wy_f = goal.pose.position.y;
 
-        costmap_ros_->worldToMap(wx_i, wy_i, mx_i, my_i);       //conversion of coordinates to indices 
+        costmap_ros_->worldToMap(wx_i, wy_i, mx_i, my_i);       //conversion of worlds coordinates to map indices 
         costmap_ros_->worldToMap(wx_f, wy_f, mx_f, my_f);
 
         std::priority_queue< Cell , std::vector<Cell> , pq_util> pq;     //min heap

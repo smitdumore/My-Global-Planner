@@ -5,8 +5,13 @@
 
 int count=0;
 
+/**
+ * @brief Initialises a line list visualisation marker
+ * @param line_msg - empty marker
+ * @param scale - marker size
+ */
 void init_line(visualization_msgs::Marker* line_msg, double scale){
-    
+
     line_msg->header.frame_id = "map";
     line_msg->id = count++;
     line_msg->type = visualization_msgs::Marker::LINE_LIST;
@@ -15,6 +20,15 @@ void init_line(visualization_msgs::Marker* line_msg, double scale){
     line_msg->scale.x = scale;
 }
 
+/**
+ * @brief Publishes an edge 
+ * @param line_msg - initialised visualisation marker
+ * @param line_pub - ros publisher
+ * @param x1 - start point x
+ * @param y1 - start point y 
+ * @param x2 - end point x
+ * @param y2 - end point y
+ */
 void pub_line(visualization_msgs::Marker* line_msg, ros::Publisher* line_pub, 
                 double x1, double y1, double x2, double y2){
 
@@ -52,6 +66,10 @@ void pub_line(visualization_msgs::Marker* line_msg, ros::Publisher* line_pub,
 
 }
 
+/**
+ * @brief Initialises a sphere visualisation marker
+ * @param point_msg - empty marker
+ */
 void init_point(visualization_msgs::Marker* point_msg){
     
     point_msg->header.frame_id = "map";
@@ -64,6 +82,13 @@ void init_point(visualization_msgs::Marker* point_msg){
     point_msg->scale.z = 0.05;
 }
 
+/**
+ * @brief Publishes a marker
+ * @param point_msg - intialised marker
+ * @param point_pub - ros publisher
+ * @param x - point x
+ * @param y - point y
+ */
 void pub_point(visualization_msgs::Marker* point_msg, ros::Publisher* point_pub, 
                 double x, double y){
 

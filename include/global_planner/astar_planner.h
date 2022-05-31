@@ -27,16 +27,37 @@ namespace global_planner {
         GlobalPlanner();
         GlobalPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
 
-        void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
-        bool makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
-        std::vector<geometry_msgs::PoseStamped>& plan);
+        // Overloading BaseGlobalPlanner functions 
 
+        /**
+         * @brief - This function initializes the global cost map and other variables
+         * @param name 
+         * @param costmap_ros 
+         */
+        void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
+
+        /**
+         * @brief Main planner loop. Planner is implemented in this function
+         * @param start - robot start pose
+         * @param goal - goal pose
+         * @param plan - Plan is a vector of poses
+         * @return true - success in finding the path
+         */
+        bool makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
+                                                        std::vector<geometry_msgs::PoseStamped>& plan);
+
+        // Definition of a cell for grid based planning
         struct Cell{
+            // x and y coordinate of cell in map 
+            // strictly positive
             uint x;
             uint y;
-            double dist;               //current dist of cell //so far distance // so far sum of costs
 
-            bool operator<(const Cell &c1) const{                     //this operator overloading helps std::map to arranges cells
+            // cummulative dist of cell from root
+            double dist;
+
+            //this operator overloading helps std::map to arranges cells
+            bool operator<(const Cell &c1) const{                     
                 return ((c1.x < x) || ( c1.x == x && c1.y < y));      
             }
 
@@ -46,25 +67,40 @@ namespace global_planner {
 
         };
 
+        // utility function for min heap priority queue
         struct pq_util{
-            bool operator()(Cell const& c1, Cell const& c2){            //min heap
+            bool operator()(Cell const& c1, Cell const& c2){
                 return c1.dist > c2.dist;
             } 
         };
 
-        
 
         ros::NodeHandle nh_;
+        
         int count=0;
-
-        ros::Publisher vis_cells;
-        bool isValid(Cell);
-        costmap_2d::Costmap2D* costmap_ros_;
-        void vis(int ,int, costmap_2d::Costmap2D*, bool);
+        ros::Publisher vis_cells;                // cell visualisation publisher 
+        costmap_2d::Costmap2D* costmap_ros_;     // Global cost map
         int size_x = 0, size_y = 0;
-        double heuristic_calc(Cell ,Cell , costmap_2d::Costmap2D*);
-
         bool plan_pushed = false;
+
+        /**
+         * @brief This funcitons checks whether a cell is inside the gloabl cost map limits
+         * @param cell
+         * @return true/false
+         */
+        bool isValid(Cell);
+        
+        /**
+         * @brief - creates sphere list visualisations for the planner 
+         */
+        void vis(int ,int, costmap_2d::Costmap2D*, bool);
+        
+        /**
+         * @brief - Function to calculate a heuristic for a-star
+         * Eucliedian distance is used for heuristic calculation  
+         * @return double - distance from cell to goal
+         */
+        double heuristic_calc(Cell ,Cell , costmap_2d::Costmap2D*);
         
     };
 };

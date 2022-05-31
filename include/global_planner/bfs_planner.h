@@ -26,35 +26,62 @@ namespace global_planner {
         GlobalPlanner();
         GlobalPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
 
+        // Overloading BaseGlobalPlanner functions
+
+        /**
+         * @brief - This function initializes the global cost map and other variables
+         * @param name 
+         * @param costmap_ros 
+         */
         void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
+
+        /**
+         * @brief Main planner loop. Planner is implemented in this function
+         * @param start - robot start pose
+         * @param goal - goal pose
+         * @param plan - Plan is a vector of poses
+         * @return true - success in finding the path
+         */
         bool makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
-        std::vector<geometry_msgs::PoseStamped>& plan);
+                                                        std::vector<geometry_msgs::PoseStamped>& plan);
 
 
-        ros::NodeHandle nh_;
-
+        // Definition of a cell for grid based planning
         struct Cell{
+            // x and y coordinate of cell in map 
+            // strictly positive
             uint x;
             uint y;
 
+            //this operator overloading helps std::map to arranges cells
             bool operator==(const Cell &c1) const{  
                 return ((c1.x == x) && (c1.y == y));
             }
 
-            bool operator<(const Cell &c1) const{                     //this operator overloading helps std::map to arranges cells
+            bool operator<(const Cell &c1) const{
                 return ((c1.x < x) || ( c1.x == x && c1.y < y));
             }  
         };
 
+        ros::NodeHandle nh_;
 
-        ros::Publisher vis_cells;
-        bool isValid(Cell);
-        costmap_2d::Costmap2D* costmap_ros_;
-        void vis(int ,int, costmap_2d::Costmap2D*, bool);
+        ros::Publisher vis_cells;            // cell visualisation publisher 
+        costmap_2d::Costmap2D* costmap_ros_; // Global cost map
         int size_x = 0, size_y = 0;
         int count=0;
-
         bool plan_pushed = false;
+
+        /**
+         * @brief This funcitons checks whether a cell is inside the gloabl cost map limits
+         * @param cell
+         * @return true/false
+         */
+        bool isValid(Cell);
+        
+        /**
+         * @brief - creates sphere list visualisations for the planner 
+         */
+        void vis(int ,int, costmap_2d::Costmap2D*, bool);
         
     };
     
